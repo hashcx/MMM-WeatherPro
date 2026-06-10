@@ -1,0 +1,9 @@
+{
+  "name": "mmm-weatherpro",
+  "version": "1.0.0",
+  "description": "Robust futuristic MagicMirror² weather module using Open-Meteo (no API key)",
+  "main": "MMM-WeatherPro.js",
+  "keywords": ["MagicMirror", "weather", "forecast", "open-meteo"],
+  "license": "MIT",
+  "dependencies": {}
+}

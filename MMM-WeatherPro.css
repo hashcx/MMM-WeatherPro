@@ -1,0 +1,319 @@
+/* MMM-WeatherPro — Futuristic minimal weather module */
+
+:root {
+  --wp-accent:  #40c4ff;
+  --wp-danger:  #ff4d4d;
+  --wp-card-bg: rgba(255, 255, 255, 0.06);
+  --wp-text:    #fff;
+  --wp-subtext: rgba(255, 255, 255, 0.5);
+  --wp-border:  rgba(255, 255, 255, 0.1);
+}
+
+.MMM-WeatherPro {
+  font-family: inherit;
+  color: var(--wp-text);
+  min-width: 280px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Location header ───────────────────────────────────── */
+.wp-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75em;
+  color: var(--wp-accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.wp-loc-icon { font-size: 0.9em; }
+
+/* ── Loading / error ───────────────────────────────────── */
+.wp-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--wp-subtext);
+  font-size: 0.85em;
+  padding: 12px 0;
+}
+
+.wp-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--wp-border);
+  border-top-color: var(--wp-accent);
+  border-radius: 50%;
+  animation: wp-spin 0.8s linear infinite;
+}
+
+@keyframes wp-spin {
+  to { transform: rotate(360deg); }
+}
+
+.wp-error {
+  color: var(--wp-danger);
+  font-size: 0.85em;
+  padding: 8px 0;
+}
+
+/* ── Current conditions ────────────────────────────────── */
+.wp-current {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 10px;
+  align-items: var(--wp-align-items, flex-start);
+}
+
+/* Header: temps left, icon right — mirrors hourly/daily card layout */
+.wp-current-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: var(--wp-justify, flex-start);
+  width: 100%;
+}
+
+.wp-cond-icon {
+  font-size: 2em;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.wp-current-temps {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.wp-temp-big {
+  font-size: 2em;
+  font-weight: 200;
+  letter-spacing: -0.02em;
+  color: var(--wp-text);
+  line-height: 1;
+}
+
+/* Secondary temp — same size, dimmed */
+.wp-temp-big.wp-temp-secondary {
+  color: var(--wp-subtext);
+}
+
+/* Unit label superscript — sits at top of number */
+.wp-temp-unit {
+  font-size: 0.38em;
+  font-weight: 400;
+  color: var(--wp-subtext);
+  vertical-align: super;
+  line-height: 0;
+}
+
+/* ── Current grid (chips) ──────────────────────────────── */
+.wp-current-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: var(--wp-justify, flex-start);
+}
+
+/* ── Section ───────────────────────────────────────────── */
+.wp-section {
+  margin-bottom: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.wp-section-title {
+  font-size: 0.6em;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--wp-subtext);
+  margin-bottom: 6px;
+  text-align: var(--wp-align, left);
+}
+
+/* ── Forecast row ──────────────────────────────────────── */
+.wp-forecast-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+/* Grid mode — fixed N cards per row */
+.wp-row-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--wp-cards-per-row, 4), 1fr);
+  gap: 5px;
+}
+
+.wp-row-grid .wp-card {
+  flex: unset;
+  min-width: unset;
+  width: 100%;
+}
+
+/* ── Cards ─────────────────────────────────────────────── */
+.wp-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: var(--wp-card-bg);
+  border: 1px solid var(--wp-border);
+  border-radius: 7px;
+  padding: 5px 6px;
+  min-width: 0;
+  flex: 1 1 52px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Header: time/day on left, weather icon on right */
+.wp-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1px;
+}
+
+.wp-card-time {
+  font-size: 0.58em;
+  color: var(--wp-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.wp-card-icon {
+  font-size: 0.85em;
+  line-height: 1;
+}
+
+/* ── Field row (inside cards) ──────────────────────────── */
+.wp-field-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.58em;
+  color: rgba(255,255,255,0.55);
+  white-space: nowrap;
+  border-radius: 3px;
+  padding: 0 2px;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.wp-field-icon { font-size: 0.85em; line-height: 1; }
+.wp-field-val  { font-variant-numeric: tabular-nums; }
+
+.wp-delta-up   { color: #ff6b6b; font-size: 0.85em; margin-left: 2px; }
+.wp-delta-down { color: #40c4ff; font-size: 0.85em; margin-left: 2px; }
+.wp-delta-eq   { color: rgba(255,255,255,0.25); font-size: 0.85em; margin-left: 2px; }
+
+/* ── Chips (current grid only) ─────────────────────────── */
+.wp-chip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--wp-card-bg);
+  border: 1px solid var(--wp-border);
+  border-radius: 20px;
+  padding: 2px 6px;
+  font-size: 0.62em;
+  white-space: nowrap;
+}
+
+.wp-chip-icon { font-size: 0.85em; }
+.wp-chip-val  { color: var(--wp-subtext); }
+
+/* ── Animations (applied to individual field rows/chips) ── */
+
+@keyframes wp-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+.wp-anim-pulse {
+  animation: wp-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes wp-glow {
+  0%, 100% { box-shadow: 0 0 3px 1px var(--wp-anim-color, var(--wp-accent)); }
+  50%       { box-shadow: 0 0 10px 3px var(--wp-anim-color, var(--wp-accent)); }
+}
+.wp-anim-glow {
+  animation: wp-glow 2s ease-in-out infinite;
+  border-color: var(--wp-anim-color, var(--wp-accent)) !important;
+}
+
+@keyframes wp-shake {
+  0%, 100%      { transform: translateX(0); }
+  20%, 60%      { transform: translateX(-2px); }
+  40%, 80%      { transform: translateX(2px); }
+}
+.wp-anim-shake {
+  animation: wp-shake 0.6s ease-in-out infinite;
+}
+
+@keyframes wp-flash {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+.wp-anim-flash {
+  animation: wp-flash 0.8s step-end infinite;
+}
+
+/* Highlight — colored background tint, no motion */
+.wp-anim-highlight {
+  border-color: var(--wp-anim-color, var(--wp-danger)) !important;
+  color: #fff;
+}
+
+/* Bounce — gentle vertical hop */
+@keyframes wp-bounce {
+  0%, 100% { transform: translateY(0); }
+  40%       { transform: translateY(-4px); }
+  60%       { transform: translateY(-2px); }
+}
+.wp-anim-bounce {
+  animation: wp-bounce 1.2s ease-in-out infinite;
+}
+
+/* Bold — just makes the value text brighter/heavier */
+.wp-anim-bold .wp-field-val,
+.wp-anim-bold .wp-chip-val {
+  color: var(--wp-anim-color, var(--wp-danger)) !important;
+  font-weight: 700;
+}
+
+/* ── Charts ────────────────────────────────────────────── */
+.wp-chart-wrap {
+  display: block;
+  width: 100%;
+}
+
+.wp-chart {
+  display: block;
+  overflow: visible;
+}
+
+/* ── Last updated ──────────────────────────────────────── */
+.wp-last-updated {
+  display: flex;
+  align-items: center;
+  justify-content: var(--wp-justify, flex-start);
+  gap: 4px;
+  font-size: 0.55em;
+  color: var(--wp-subtext);
+  letter-spacing: 0.06em;
+  margin-top: 6px;
+  opacity: 0.7;
+}
+
+.wp-last-updated-icon {
+  font-size: 0.9em;
+  line-height: 1;
+}
