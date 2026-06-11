@@ -336,7 +336,7 @@ Module.register("MMM-WeatherPro", {
     const card = document.createElement("div");
     card.className = "wp-card";
 
-    const date = new Date(days.time[idx]);
+    const date = new Date(days.time[idx] + "T00:00:00");
     const dayEl = document.createElement("div");
     dayEl.className = "wp-card-time";
     dayEl.textContent = idx === 0
@@ -473,25 +473,16 @@ Module.register("MMM-WeatherPro", {
       }
     }
 
-    // ── Wind: dashed line + value labels below the baseline ───────────────
-    const wMax     = showWind ? Math.max(1, ...winds.filter(Boolean)) : 1;
-    const windBaseY = padTop + plotH;          // baseline y
-    const windLineY = windBaseY + 6;           // dashed line sits 6px below baseline
-    const windLblY  = windBaseY + 16;          // value text below the line
-    const yWind     = (v) => windLineY - 4 * norm(v, 0, wMax);  // subtle vertical variation (±4px)
-    let windLine = "", windDots = "", windLabels = "";
+    // ── Wind: directional arrow + value labels below the baseline ────────
+    const windBaseY = padTop + plotH;
+    const windLblY  = windBaseY + 14;
+    const windDirs  = showWind ? slice(hours.wind_direction_10m) : [];
+    let windLabels = "";
     if (showWind) {
-      const wpts = winds.map((v, i) => v === null ? null : [xOf(i), yWind(v)]).filter(Boolean);
-      if (wpts.length > 1) {
-        const wPathD = wpts.map((p, j) => `${j === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
-        windLine = `<path d="${wPathD}" fill="none" stroke="${windColor}" stroke-width="1" stroke-dasharray="3,2" stroke-linejoin="round" stroke-linecap="round"/>`;
-      }
       for (let i = 0; i < count; i++) {
         if (winds[i] === null) continue;
-        const cx = xOf(i);
-        const cy = yWind(winds[i]);
-        windDots   += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="1.5" fill="${windColor}"/>`;
-        windLabels += `<text x="${cx.toFixed(1)}" y="${windLblY.toFixed(1)}" text-anchor="middle" fill="${windColor}" font-size="6.5" font-family="inherit">💨${Math.round(winds[i])}</text>`;
+        const arrow = this._windDir(windDirs[i]);
+        windLabels += `<text x="${xOf(i).toFixed(1)}" y="${windLblY.toFixed(1)}" text-anchor="middle" fill="${windColor}" font-size="8" font-family="inherit">${Math.round(winds[i])} ${arrow}</text>`;
       }
     }
 
@@ -511,7 +502,7 @@ Module.register("MMM-WeatherPro", {
         label = t.getHours().toString().padStart(2, "0") + ":00";
       }
       icons   += `<text x="${cx.toFixed(1)}" y="${iconY.toFixed(1)}" text-anchor="middle" font-size="10">${this._weatherIcon(codes[i] ?? 0)}</text>`;
-      xLabels += `<text x="${cx.toFixed(1)}" y="${lblY.toFixed(1)}" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="7" font-family="inherit">${label}</text>`;
+      xLabels += `<text x="${cx.toFixed(1)}" y="${lblY.toFixed(1)}" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="8" font-family="inherit">${label}</text>`;
     }
 
     const baseLine = `<line x1="${padL}" y1="${padTop + plotH}" x2="${W - padR}" y2="${padTop + plotH}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>`;
@@ -521,7 +512,7 @@ Module.register("MMM-WeatherPro", {
     svg.setAttribute("width", "100%");
     svg.setAttribute("height", H);
     svg.setAttribute("class", "wp-chart");
-    svg.innerHTML = baseLine + bars + area + line + dots + tempLabels + windLine + windDots + windLabels + icons + xLabels;
+    svg.innerHTML = baseLine + bars + area + line + dots + tempLabels + windLabels + icons + xLabels;
     return svg;
   },
 
@@ -565,7 +556,7 @@ Module.register("MMM-WeatherPro", {
     const precip  = slice(days.precipitation);
     const precipP = slice(days.precipitation_probability);
     const codes   = slice(days.weather_code);
-    const times   = slice(days.time).map(t => new Date(t));
+    const times   = slice(days.time).map(t => new Date(t + "T00:00:00"));
 
     const toDisp = (v) => v === null ? null
       : this.config.units === "F" ? Math.round(v * 9/5 + 32) : Math.round(v);
@@ -613,27 +604,18 @@ Module.register("MMM-WeatherPro", {
       }
     }
 
-    // ── Wind: dashed line + value labels below baseline ───────────────────
-    const winds       = slice(days.wind_speed_10m);
-    const wMax        = showWind ? Math.max(1, ...winds.filter(Boolean)) : 1;
-    const windColor   = "rgba(255,255,255,0.55)";
-    const windBaseY   = padTop + plotH;
-    const windLineY   = windBaseY + 6;
-    const windLblY    = windBaseY + 16;
-    const yWind       = (v) => windLineY - 4 * ((v - 0) / (wMax - 0 || 1));
-    let windLine = "", windDots = "", windLabels = "";
+    // ── Wind: directional arrow + value labels below baseline ────────────
+    const winds     = slice(days.wind_speed_10m);
+    const windDirs  = slice(days.wind_direction_10m);
+    const windColor = "rgba(255,255,255,0.55)";
+    const windBaseY = padTop + plotH;
+    const windLblY  = windBaseY + 14;
+    let windLabels = "";
     if (showWind) {
-      const wpts = winds.map((v, i) => v === null ? null : [xOf(i), yWind(v)]).filter(Boolean);
-      if (wpts.length > 1) {
-        const wPathD = wpts.map((p, j) => `${j === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
-        windLine = `<path d="${wPathD}" fill="none" stroke="${windColor}" stroke-width="1" stroke-dasharray="3,2" stroke-linejoin="round" stroke-linecap="round"/>`;
-      }
       for (let i = 0; i < count; i++) {
         if (winds[i] === null) continue;
-        const cx = xOf(i);
-        const cy = yWind(winds[i]);
-        windDots   += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="1.5" fill="${windColor}"/>`;
-        windLabels += `<text x="${cx.toFixed(1)}" y="${windLblY.toFixed(1)}" text-anchor="middle" fill="${windColor}" font-size="6.5" font-family="inherit">💨${Math.round(winds[i])}</text>`;
+        const arrow = this._windDir(windDirs[i]);
+        windLabels += `<text x="${xOf(i).toFixed(1)}" y="${windLblY.toFixed(1)}" text-anchor="middle" fill="${windColor}" font-size="8" font-family="inherit">${Math.round(winds[i])} ${arrow}</text>`;
       }
     }
 
@@ -645,7 +627,7 @@ Module.register("MMM-WeatherPro", {
       const cx    = xOf(i);
       const label = i === 0 ? "Today" : times[i].toLocaleDateString(undefined, { weekday: "short" });
       icons   += `<text x="${cx.toFixed(1)}" y="${iconY.toFixed(1)}" text-anchor="middle" font-size="10">${this._weatherIcon(codes[i] ?? 0)}</text>`;
-      xLabels += `<text x="${cx.toFixed(1)}" y="${lblY.toFixed(1)}" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="7" font-family="inherit">${label}</text>`;
+      xLabels += `<text x="${cx.toFixed(1)}" y="${lblY.toFixed(1)}" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="8" font-family="inherit">${label}</text>`;
     }
 
     const baseLine = `<line x1="${padL}" y1="${padTop + plotH}" x2="${W - padR}" y2="${padTop + plotH}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>`;
@@ -655,7 +637,7 @@ Module.register("MMM-WeatherPro", {
     svg.setAttribute("width", "100%");
     svg.setAttribute("height", H);
     svg.setAttribute("class", "wp-chart");
-    svg.innerHTML = baseLine + precipBars + rangeBars + rangeLabels + windLine + windDots + windLabels + icons + xLabels;
+    svg.innerHTML = baseLine + precipBars + rangeBars + rangeLabels + windLabels + icons + xLabels;
     return svg;
   },
 
@@ -847,6 +829,11 @@ Module.register("MMM-WeatherPro", {
   _secondaryUnitSymbol () { return this.config.units === "F" ? "°C" : "°F"; },
 
   /* ─────────────────────── WEATHER CODES ──────────────────────────────── */
+  _windDir (deg) {
+    const dirs = ["N","NE","E","SE","S","SW","W","NW"];
+    return dirs[Math.round(((deg ?? 0) % 360) / 45) % 8];
+  },
+
   _weatherIcon (code) {
     if (code === 0)                    return "☀️";
     if (code <= 2)                     return "⛅";

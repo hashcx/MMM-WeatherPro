@@ -73,7 +73,7 @@ module.exports = NodeHelper.create({
       hourly: [
         "temperature_2m", "apparent_temperature", "relative_humidity_2m",
         "precipitation_probability", "precipitation", "weather_code",
-        "wind_speed_10m", "uv_index",
+        "wind_speed_10m", "wind_direction_10m", "uv_index",
       ].join(","),
       forecast_hours: 48,
 
@@ -81,7 +81,7 @@ module.exports = NodeHelper.create({
       daily: [
         "temperature_2m_max", "temperature_2m_min",
         "precipitation_sum", "precipitation_probability_max",
-        "weather_code", "wind_speed_10m_max",
+        "weather_code", "wind_speed_10m_max", "wind_direction_10m_dominant",
         "uv_index_max",
       ].join(","),
       forecast_days: 16,
@@ -98,6 +98,7 @@ module.exports = NodeHelper.create({
       data.daily.precipitation        = data.daily.precipitation_sum;
       data.daily.precipitation_probability = data.daily.precipitation_probability_max;
       data.daily.wind_speed_10m        = data.daily.wind_speed_10m_max;
+      data.daily.wind_direction_10m    = data.daily.wind_direction_10m_dominant;
       data.daily.uv_index              = data.daily.uv_index_max;
     }
 
