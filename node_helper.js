@@ -66,14 +66,14 @@ module.exports = NodeHelper.create({
       current: [
         "temperature_2m", "apparent_temperature", "relative_humidity_2m",
         "precipitation", "weather_code", "wind_speed_10m",
-        "uv_index",
+        "uv_index", "is_day",
       ].join(","),
 
       // Hourly — next 48 hours
       hourly: [
         "temperature_2m", "apparent_temperature", "relative_humidity_2m",
         "precipitation_probability", "precipitation", "weather_code",
-        "wind_speed_10m", "wind_direction_10m", "uv_index",
+        "wind_speed_10m", "wind_direction_10m", "uv_index", "is_day",
       ].join(","),
       forecast_hours: 48,
 

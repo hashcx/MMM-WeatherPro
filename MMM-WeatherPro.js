@@ -233,7 +233,7 @@ Module.register("MMM-WeatherPro", {
       <span class="wp-current-temps">
         <span class="wp-temp-big">${tempVal.primary}<sup class="wp-temp-unit">${this._unitSymbol()}</sup></span>
         ${tempVal.secondary ? `<span class="wp-temp-big wp-temp-secondary">${tempVal.secondary}<sup class="wp-temp-unit">${this._secondaryUnitSymbol()}</sup></span>` : ""}
-        <span class="wp-cond-icon">${this._weatherIcon(c.weather_code)}</span>
+        <span class="wp-cond-icon">${this._weatherIcon(c.weather_code, c.is_day ?? 1)}</span>
       </span>
     `;
     el.appendChild(header);
@@ -297,7 +297,7 @@ Module.register("MMM-WeatherPro", {
 
     const icon = document.createElement("span");
     icon.className = "wp-card-icon";
-    icon.textContent = this._weatherIcon(hours.weather_code?.[idx] ?? 0);
+    icon.textContent = this._weatherIcon(hours.weather_code?.[idx] ?? 0, hours.is_day?.[idx] ?? 1);
 
     // Header row: time left, icon right
     const header = document.createElement("div");
@@ -422,6 +422,7 @@ Module.register("MMM-WeatherPro", {
     const precipP = slice(hours.precipitation_probability);
     const winds   = slice(hours.wind_speed_10m);
     const codes   = slice(hours.weather_code);
+    const isDayArr = slice(hours.is_day);
     const times   = slice(hours.time).map(t => new Date(t));
 
     const xOf  = (i) => padL + slotW * i + slotW / 2;
@@ -450,9 +451,11 @@ Module.register("MMM-WeatherPro", {
       for (let i = 0; i < count; i++) {
         if (dispTemps[i] === null) continue;
         const [cx, cy] = [xOf(i), yTemp(dispTemps[i])];
-        dots += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="2.5" fill="${accent}"/>`;
+        const ai   = this._chartAlertInfo("temperature", temps[i], "hourly");
+        const cls  = ai ? ` class="${ai.cls}"` : "";
+        dots += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="2.5" fill="${accent}"${cls}/>`;
         const labelY = Math.max(padTop - 2, cy - 5);
-        tempLabels += `<text x="${cx.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" fill="${accent}" font-size="7" font-family="inherit">${dispTemps[i]}${this._unitSymbol()}</text>`;
+        tempLabels += `<text x="${cx.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" fill="${accent}" font-size="7" font-family="inherit"${cls}>${dispTemps[i]}${this._unitSymbol()}</text>`;
       }
     }
 
@@ -461,15 +464,18 @@ Module.register("MMM-WeatherPro", {
     const precipData  = fields.includes("precipitationProbability") ? precipP : precip;
     const precipMax   = fields.includes("precipitationProbability") ? 100 : Math.max(1, ...precipData.filter(Boolean));
     const barW        = slotW * 0.45;
+    const precipField = fields.includes("precipitationProbability") ? "precipitationProbability" : "precipitation";
     let bars = "";
     if (showPrecip) {
       for (let i = 0; i < count; i++) {
         const v = precipData[i];
         if (v === null || v <= 0) continue;
+        const ai   = this._chartAlertInfo(precipField, v, "hourly");
+        const cls  = ai ? ` class="${ai.cls}"` : "";
         const bh = plotH * (v / precipMax);
         const bx = xOf(i) - barW / 2;
         const by = padTop + plotH - bh;
-        bars += `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${rain}" opacity="0.35" rx="2"/>`;
+        bars += `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${rain}" opacity="0.35" rx="2"${cls}/>`;
       }
     }
 
@@ -481,8 +487,10 @@ Module.register("MMM-WeatherPro", {
     if (showWind) {
       for (let i = 0; i < count; i++) {
         if (winds[i] === null) continue;
+        const ai    = this._chartAlertInfo("windSpeed", winds[i], "hourly");
+        const cls   = ai ? ` class="${ai.cls}"` : "";
         const arrow = this._windDir(windDirs[i]);
-        windLabels += `<text x="${xOf(i).toFixed(1)}" y="${windLblY.toFixed(1)}" text-anchor="middle" fill="${windColor}" font-size="8" font-family="inherit">${Math.round(winds[i])} ${arrow}</text>`;
+        windLabels += `<text x="${xOf(i).toFixed(1)}" y="${windLblY.toFixed(1)}" text-anchor="middle" fill="${windColor}" font-size="8" font-family="inherit"${cls}>${Math.round(winds[i])} ${arrow}</text>`;
       }
     }
 
@@ -501,7 +509,7 @@ Module.register("MMM-WeatherPro", {
       } else {
         label = t.getHours().toString().padStart(2, "0") + ":00";
       }
-      icons   += `<text x="${cx.toFixed(1)}" y="${iconY.toFixed(1)}" text-anchor="middle" font-size="10">${this._weatherIcon(codes[i] ?? 0)}</text>`;
+      icons   += `<text x="${cx.toFixed(1)}" y="${iconY.toFixed(1)}" text-anchor="middle" font-size="10">${this._weatherIcon(codes[i] ?? 0, isDayArr[i] ?? 1)}</text>`;
       xLabels += `<text x="${cx.toFixed(1)}" y="${lblY.toFixed(1)}" text-anchor="middle" fill="rgba(255,255,255,0.45)" font-size="8" font-family="inherit">${label}</text>`;
     }
 
@@ -576,15 +584,18 @@ Module.register("MMM-WeatherPro", {
     const precipData  = fields.includes("precipitationProbability") ? precipP : precip;
     const precipMax   = fields.includes("precipitationProbability") ? 100 : Math.max(1, ...precipData.filter(Boolean));
     const barW        = slotW * 0.35;
+    const precipField = fields.includes("precipitationProbability") ? "precipitationProbability" : "precipitation";
     let precipBars = "";
     if (showPrecip) {
       for (let i = 0; i < count; i++) {
         const v = precipData[i];
         if (!v || v <= 0) continue;
+        const ai   = this._chartAlertInfo(precipField, v, "daily");
+        const cls  = ai ? ` class="${ai.cls}"` : "";
         const bh = plotH * (v / precipMax);
         const bx = xOf(i) - barW / 2;
         const by = padTop + plotH - bh;
-        precipBars += `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${rain}" opacity="0.35" rx="2"/>`;
+        precipBars += `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${rain}" opacity="0.35" rx="2"${cls}/>`;
       }
     }
 
@@ -594,13 +605,17 @@ Module.register("MMM-WeatherPro", {
     if (showRange) {
       for (let i = 0; i < count; i++) {
         if (dispMax[i] === null || dispMin[i] === null) continue;
-        const yHi = yTemp(dispMax[i]);
-        const yLo = yTemp(dispMin[i]);
-        const cx  = xOf(i);
-        const rh  = Math.max(2, yLo - yHi);
+        const yHi   = yTemp(dispMax[i]);
+        const yLo   = yTemp(dispMin[i]);
+        const cx    = xOf(i);
+        const rh    = Math.max(2, yLo - yHi);
+        const aiMax = this._chartAlertInfo("temperature", maxRaw[i], "daily");
+        const aiMin = this._chartAlertInfo("temperature", minRaw[i], "daily");
+        const clsMax   = aiMax ? ` class="${aiMax.cls}"` : "";
+        const clsMin   = aiMin ? ` class="${aiMin.cls}"` : "";
         rangeBars   += `<rect x="${(cx - 3).toFixed(1)}" y="${yHi.toFixed(1)}" width="6" height="${rh.toFixed(1)}" fill="${accent}" opacity="0.55" rx="3"/>`;
-        rangeLabels += `<text x="${cx.toFixed(1)}" y="${(yHi - 3).toFixed(1)}" text-anchor="middle" fill="${accent}" font-size="7" font-family="inherit">${dispMax[i]}°</text>`;
-        rangeLabels += `<text x="${cx.toFixed(1)}" y="${(yLo + 8).toFixed(1)}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="7" font-family="inherit">${dispMin[i]}°</text>`;
+        rangeLabels += `<text x="${cx.toFixed(1)}" y="${(yHi - 3).toFixed(1)}" text-anchor="middle" fill="${accent}" font-size="7" font-family="inherit"${clsMax}>${dispMax[i]}°</text>`;
+        rangeLabels += `<text x="${cx.toFixed(1)}" y="${(yLo + 8).toFixed(1)}" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="7" font-family="inherit"${clsMin}>${dispMin[i]}°</text>`;
       }
     }
 
@@ -614,8 +629,10 @@ Module.register("MMM-WeatherPro", {
     if (showWind) {
       for (let i = 0; i < count; i++) {
         if (winds[i] === null) continue;
+        const ai    = this._chartAlertInfo("windSpeed", winds[i], "daily");
+        const cls   = ai ? ` class="${ai.cls}"` : "";
         const arrow = this._windDir(windDirs[i]);
-        windLabels += `<text x="${xOf(i).toFixed(1)}" y="${windLblY.toFixed(1)}" text-anchor="middle" fill="${windColor}" font-size="8" font-family="inherit">${Math.round(winds[i])} ${arrow}</text>`;
+        windLabels += `<text x="${xOf(i).toFixed(1)}" y="${windLblY.toFixed(1)}" text-anchor="middle" fill="${windColor}" font-size="8" font-family="inherit"${cls}>${Math.round(winds[i])} ${arrow}</text>`;
       }
     }
 
@@ -639,6 +656,23 @@ Module.register("MMM-WeatherPro", {
     svg.setAttribute("class", "wp-chart");
     svg.innerHTML = baseLine + precipBars + rangeBars + rangeLabels + windLabels + icons + xLabels;
     return svg;
+  },
+
+  _chartAlertInfo (field, rawValue, target) {
+    if (rawValue === null || rawValue === undefined) return null;
+    for (const rule of this.config.alerts) {
+      if (rule.field !== field) continue;
+      if (rule.target !== target && rule.target !== "both") continue;
+      const matches = {
+        "<":  rawValue <  rule.value, ">":  rawValue >  rule.value,
+        "<=": rawValue <= rule.value, ">=": rawValue >= rule.value,
+        "==": rawValue === rule.value, "!=": rawValue !== rule.value,
+      }[rule.operator];
+      if (matches && rule.animation) {
+        return { cls: `wp-anim-${rule.animation}`, color: rule.color || this.config.dangerColor };
+      }
+    }
+    return null;
   },
 
   _applyAlertToEl (el, field, data, idx, target) {
@@ -834,17 +868,18 @@ Module.register("MMM-WeatherPro", {
     return dirs[Math.round(((deg ?? 0) % 360) / 45) % 8];
   },
 
-  _weatherIcon (code) {
-    if (code === 0)                    return "☀️";
-    if (code <= 2)                     return "⛅";
-    if (code === 3)                    return "☁️";
-    if (code <= 49)                    return "🌫";
-    if (code <= 57)                    return "🌧";
-    if (code <= 67)                    return "🌧";
-    if (code <= 77)                    return "❄️";
-    if (code <= 82)                    return "🌦";
-    if (code <= 86)                    return "🌨";
-    if (code <= 99)                    return "⛈";
+  _weatherIcon (code, isDay = 1) {
+    if (code === 0)  return isDay ? "☀️" : "🌙";
+    if (code === 1)  return isDay ? "🌤" : "🌙";
+    if (code === 2)  return isDay ? "⛅" : "☁️";
+    if (code === 3)  return "☁️";
+    if (code <= 49)  return "🌫";
+    if (code <= 57)  return "🌧";
+    if (code <= 67)  return "🌧";
+    if (code <= 77)  return "❄️";
+    if (code <= 82)  return isDay ? "🌦" : "🌧";
+    if (code <= 86)  return "🌨";
+    if (code <= 99)  return "⛈";
     return "🌡";
   },
 
